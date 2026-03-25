@@ -1,0 +1,48 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite" // You can switch to PostgreSQL later
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id      Int      @id @default(autoincrement())
+  name    String
+  apiKeys ApiKey[]
+  audits  AuditLog[]
+  users   User[]
+}
+
+model ApiKey {
+  id        Int     @id @default(autoincrement())
+  keyHash   String
+  tenantId  Int
+  tenant    Tenant  @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+  role     String // "Owner" or "Member"
+  tenantId Int
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  previous  String?
+  current   String?
+  userId    Int
+  tenantId  Int
+  apiKeyId  Int
+  ip        String
+  timestamp DateTime @default(now())
+  chainHash String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+}
